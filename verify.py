@@ -98,6 +98,32 @@ def main() -> int:
           f"{len(inconsistent)} inconsistent: {inconsistent[:3]}" if inconsistent
           else f"all clear the ${min_deployed:,.0f} threshold")
 
+    # 7b. Contract-label -> team matching. This had a real false positive: the
+    #     team "Initia" matched "InitializableImmutableAdminUpgradeabilityProxy"
+    #     and claimed $38.5M of Aave's money. Wrong attribution is worse than none.
+    try:
+        import coverage as cov
+        idx = cov.build_name_index(teams)
+        cases = [
+            ("InitializableImmutableAdminUpgradeabilityProxy", None),
+            ("TransparentUpgradeableProxy", None),
+            ("ERC1967Proxy SingleOwnerMSCA", None),
+            ("PoolManager", None),
+            ("Aave v3 USDT", "Aave"),
+            ("UniswapV3Pool", "Uniswap"),
+            ("MarketToken GMX Market", "GMX"),
+        ]
+        wrong = []
+        for label, expected in cases:
+            hit = cov.match_label(label, idx)
+            got = hit[0] if hit else None
+            if got != expected:
+                wrong.append(f"{label!r} -> {got} (want {expected})")
+        check("contract-label matching", not wrong,
+              "; ".join(wrong) if wrong else f"{len(cases)} cases correct, no false positives")
+    except ImportError:
+        check("contract-label matching", "warn", "coverage.py not importable")
+
     # 8. Chain market context loaded.
     markets = payload.get("markets") or []
     arb = next((m for m in markets if m["chain"] == "Arbitrum"), None)

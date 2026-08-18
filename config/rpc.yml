@@ -108,3 +108,17 @@ chains:
     tokens:
       USDC: {address: "0x078D782b760474a361dDA0AF3839290b0EF57AD6", verified: true}
       USDT: {address: "0x9151434b16b9763660705744891fA906F660EcC5", verified: true}  # USDT0
+
+# Free Blockscout instances (no key, ~5 rps shared) used by coverage.py to
+# enumerate the largest on-chain holders of USDC/USDT and find balances we are
+# not attributing to any team. Only chains with a verified working instance.
+blockscout:
+  Ethereum: "https://eth.blockscout.com"
+  Arbitrum: "https://arbitrum.blockscout.com"
+  Base:     "https://base.blockscout.com"
+  Optimism: "https://optimism.blockscout.com"
+  Polygon:  "https://polygon.blockscout.com"
+  Gnosis:   "https://gnosis.blockscout.com"
+  Unichain: "https://unichain.blockscout.com"
+  Celo:     "https://celo.blockscout.com"
+  Scroll:   "https://scroll.blockscout.com"

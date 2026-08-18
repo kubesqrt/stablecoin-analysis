@@ -78,13 +78,65 @@ protocols produced **737 distinct symbols**, so `config/tokens.yml` sorts them b
 Teams whose adapter publishes no token split are labelled **"no token data"** rather than
 being shown as zero — that distinction matters when you're reading the list.
 
+## What are we missing?
+
+```powershell
+python coverage.py                      # full audit
+python coverage.py --chain Arbitrum     # one chain
+```
+
+Two different gaps, measured separately rather than guessed at.
+
+**1. Teams we know about but never fetched.** Anything outside `--min-tvl`/`--max-tvl`
+has no token breakdown. This is the big one and it's purely a config choice — widen the
+scope and it goes away:
+
+```powershell
+python fetch_llama.py --min-tvl 0 --max-tvl 1e15 --max-mb 40
+```
+
+**2. Contracts we can't tie to any team.** DefiLlama only sees protocols it has an
+adapter for, so `coverage.py` walks the largest on-chain holders of USDC/USDT (free
+Blockscout API, no key, 9 chains) and sorts every holder into:
+
+| Bucket | Meaning |
+|---|---|
+| `attributed` | In your `config/addresses.yml` |
+| `matched_by_label` | Reconciled automatically from the contract's on-chain name |
+| `wallet` | EOA or smart-contract wallet — a person, not a team |
+| `infrastructure` | Exchange, bridge or issuer contract |
+| `unattributed_contract` | **The real blind spot** |
+
+Contracts whose own name is uninformative (a bare `ERC1967Proxy`) get a second lookup
+against their *implementation* contract, which usually names the owner —
+`ATokenInstance Aave v3 USDC`. On Arbitrum that pass cut the unattributed figure from
+$447M to $143M, correctly reconciling GMX ($52M), Aave ($50M) and Ostium ($17M).
+
+Matching is **whole-word only**. Substring matching produced a real false positive: the
+team "Initia" matched `InitializableImmutableAdminUpgradeabilityProxy` and claimed $38.5M
+of Aave's money. `verify.py` now regression-tests this — a wrong attribution is worse
+than an honest blank.
+
+Anything left in `unattributed_contract` (written to `data/coverage.json`) is a work
+queue: identify the owner, add it to `config/addresses.yml`, and `onchain.py` will fold
+in the measured balance.
+
+### The one gap this cannot close
+
+Chain-level supply is *not* a useful denominator. Only ~0.6% of the $250B of circulating
+USDC/USDT sits in tracked DeFi contracts at all — the rest is exchange floats, bridge
+escrows and ordinary wallets. Don't read that as 99% missing coverage; it means most
+stablecoins simply aren't deposited in protocols. Coverage is meaningful *within* the
+holder set, which is what `coverage.py` reports.
+
 ## Files
 
 | Path | Purpose |
 |---|---|
 | `fetch_llama.py` | Collect from DefiLlama → `data/snapshot.json` |
 | `build.py` | Classify tokens, apply the Arbitrum marker → `docs/` |
-| `verify.py` | 13 sanity checks (double-counting, bundling, bounds) |
+| `verify.py` | 14 sanity checks (double-counting, bundling, bounds, label matching) |
+| `coverage.py` | Audit what we are missing, and why |
 | `arbitrum_signal.py` | Optional: check team websites for Arbitrum references |
 | `onchain.py` | Optional: exact balances via Multicall3 |
 | `config/` | Token rules, chain aliases, team merges, address book, overrides |
