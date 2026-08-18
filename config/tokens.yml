@@ -25,6 +25,14 @@ core:
     - USDT_
     - BSC-USD     # Binance-Peg BSC-USD (18 decimals on chain, but USD value here)
     - USDTB
+  # Ethena's USDe. Third headline asset: 5th by circulating supply ($4.0B) but
+  # 1st among non-USDC/USDT holdings across the teams we track ($7.8B), because
+  # it is DeFi-native and concentrates in exactly the contracts this dashboard
+  # follows. sUSDe is the staked form and represents the same underlying claim.
+  USDe:
+    - USDE
+    - SUSDE
+    - USDE.E
 
 # Receipt / wrapped positions that represent underlying USDC or USDT exposure.
 # Matched by regex against the uppercased symbol. Excluded from headline figures by default.
@@ -49,8 +57,6 @@ wrapped:
 # Distinct stablecoins. Shown in their own column so a large stablecoin holder is never missed,
 # but never counted as USDC or USDT.
 other_stables:
-  - USDE
-  - SUSDE
   - DAI
   - SDAI
   - USDS

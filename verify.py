@@ -71,10 +71,18 @@ def main() -> int:
           f"{len(with_tokens)} teams, {len(nonzero)} holding USDC/USDT")
 
     # 5. USDT0 must be counted as USDT (it is the dominant USDT form on L2s).
-    usdt0 = cfg["tokens"].classify("USDT0")
+    tc = cfg["tokens"]
+    usdt0 = tc.classify("USDT0")
     check("USDT0 classified as core USDT", usdt0 == ("core", "USDT"), str(usdt0))
-    usde = cfg["tokens"].classify("USDe")
-    check("USDe kept out of core", usde == ("other", "OTHER"), str(usde))
+    # USDe is a headline asset; sUSDe is the same claim staked. Other stablecoins
+    # must stay in their own column so the headline figures mean one thing.
+    wrong = [f"{s}->{tc.classify(s)}" for s, want in
+             [("USDe", ("core", "USDE")), ("sUSDe", ("core", "USDE")),
+              ("DAI", ("other", "OTHER")), ("USDS", ("other", "OTHER")),
+              ("PYUSD", ("other", "OTHER"))]
+             if tc.classify(s) != want]
+    check("stablecoin bucketing", not wrong,
+          "; ".join(wrong) if wrong else f"assets: {', '.join(tc.assets)}")
 
     # 6. Arbitrum states are well-formed and the prospect list is non-trivial.
     states = {}

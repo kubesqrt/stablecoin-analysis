@@ -341,7 +341,7 @@ def build_teams(protocols: list, parents: dict, chains: Chains, teams_cfg: dict)
     return teams
 
 
-def chain_markets(chains: Chains) -> dict:
+def chain_markets(chains: Chains, symbols: set) -> dict:
     """Chain-level USDC/USDT supply, so a team's balance can be read against the
     size of that chain's stablecoin market."""
     out: dict[str, dict] = {}
@@ -352,7 +352,7 @@ def chain_markets(chains: Chains) -> dict:
         return out
     for asset in data.get("peggedAssets") or []:
         symbol = (asset.get("symbol") or "").upper()
-        if symbol not in ("USDT", "USDC"):
+        if symbol not in symbols:
             continue
         for raw_chain, payload in (asset.get("chainCirculating") or {}).items():
             chain = chains.normalise(raw_chain)
@@ -398,14 +398,17 @@ def merge_token_data(teams: dict, token_data: dict, chains: Chains) -> None:
 def main() -> int:
     ap = argparse.ArgumentParser(
         description="Collect per-team stablecoin balances from DefiLlama")
-    ap.add_argument("--min-tvl", type=float, default=250_000,
-                    help="lower bound of the per-token fetch scope (default 250k)")
-    ap.add_argument("--max-tvl", type=float, default=50_000_000,
-                    help="upper bound of the per-token fetch scope (default 50M)")
+    # Full scope by default. A narrow window was the single largest source of
+    # missing data - it left 3,042 teams holding $485B with no token breakdown.
+    # The If-Modified-Since cache makes covering everything cheap after run one.
+    ap.add_argument("--min-tvl", type=float, default=0,
+                    help="lower bound of the per-token fetch scope (default: no bound)")
+    ap.add_argument("--max-tvl", type=float, default=1e15,
+                    help="upper bound of the per-token fetch scope (default: no bound)")
     ap.add_argument("--limit", type=int, default=0,
                     help="only fetch N protocol documents (smoke test)")
     ap.add_argument("--workers", type=int, default=10)
-    ap.add_argument("--max-mb", type=float, default=25.0,
+    ap.add_argument("--max-mb", type=float, default=150.0,
                     help="skip documents larger than this (falls back to USD-only)")
     ap.add_argument("--no-cache", action="store_true",
                     help="ignore the If-Modified-Since cache")
@@ -441,7 +444,7 @@ def main() -> int:
     print(f"  {len(live)} live protocols -> {len(teams)} teams")
 
     print("Fetching chain-level stablecoin market sizes ...")
-    markets = chain_markets(chains)
+    markets = chain_markets(chains, set(cfg["tokens"].assets))
     print(f"  {len(markets)} chains")
 
     # Scope by TEAM tvl, so a team is either fully covered or not covered at all -

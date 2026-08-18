@@ -62,6 +62,7 @@ def arbitrum_state(team: dict, target: str, signals: dict, overrides: dict,
 
 def build_rows(snapshot: dict, cfg: dict, min_tvl: float) -> list:
     classifier = cfg["tokens"]
+    assets = [a.lower() for a in classifier.assets]
     chains = Chains(cfg["chains_cfg"])
     target = snapshot.get("target_chain") or chains.target
     overrides = (cfg["arb_overrides"] or {}).get("overrides") or {}
@@ -75,8 +76,10 @@ def build_rows(snapshot: dict, cfg: dict, min_tvl: float) -> list:
             continue
 
         per_chain = {}
-        totals = {"usdc": 0.0, "usdt": 0.0, "usdc_wrapped": 0.0,
-                  "usdt_wrapped": 0.0, "other": 0.0}
+        totals = {"other": 0.0}
+        for a in assets:
+            totals[a] = 0.0
+            totals[f"{a}_wrapped"] = 0.0
         past = {"d7": 0.0, "d30": 0.0}
         has_past = {"d7": False, "d30": False}
 
@@ -88,36 +91,37 @@ def build_rows(snapshot: dict, cfg: dict, min_tvl: float) -> list:
                 raw = entry.get(window) or {}
                 if raw:
                     split = classifier.split(raw)
-                    past[window] += split["usdc"] + split["usdt"]
+                    past[window] += sum(split[a] for a in assets)
                     has_past[window] = True
 
             now = classifier.split(entry.get("now") or {})
             if not any(now.values()):
                 continue
-            per_chain[chain] = {
-                "usdc": round(now["usdc"], 2),
-                "usdt": round(now["usdt"], 2),
-                "wrapped": round(now["usdc_wrapped"] + now["usdt_wrapped"], 2),
-                "other": round(now["other"], 2),
-                "src": "llama",
-            }
+            slot = {a: round(now[a], 2) for a in assets}
+            slot["wrapped"] = round(sum(now[f"{a}_wrapped"] for a in assets), 2)
+            slot["other"] = round(now["other"], 2)
+            slot["src"] = "llama"
+            per_chain[chain] = slot
             for key in totals:
                 totals[key] += now[key]
 
         # Exact on-chain reads override the estimate for that chain.
         for chain, measured in (onchain.get(team["key"]) or {}).items():
-            slot = per_chain.setdefault(chain, {"usdc": 0.0, "usdt": 0.0,
-                                                "wrapped": 0.0, "other": 0.0})
-            for key in ("usdc", "usdt"):
+            blank = {a: 0.0 for a in assets}
+            blank.update({"wrapped": 0.0, "other": 0.0})
+            slot = per_chain.setdefault(chain, blank)
+            for key in assets:
+                if key not in measured:
+                    continue
                 totals[key] += float(measured.get(key) or 0) - float(slot.get(key) or 0)
                 slot[key] = round(float(measured.get(key) or 0), 2)
             slot["src"] = "rpc"
 
-        core = totals["usdc"] + totals["usdt"]
+        core = sum(totals[a] for a in assets)
         arb = arbitrum_state(team, target, signals, overrides, min_deployed)
 
         top_chain = max(per_chain.items(),
-                        key=lambda kv: kv[1]["usdc"] + kv[1]["usdt"],
+                        key=lambda kv: sum(kv[1].get(a, 0) for a in assets),
                         default=(None, None))[0]
 
         rows.append({
@@ -126,10 +130,9 @@ def build_rows(snapshot: dict, cfg: dict, min_tvl: float) -> list:
             "c": team.get("category") or "Uncategorised",
             "u": team.get("url"),
             "t": round(float(team.get("tvl") or 0), 2),
-            "usdc": round(totals["usdc"], 2),
-            "usdt": round(totals["usdt"], 2),
+            **{a: round(totals[a], 2) for a in assets},
             "core": round(core, 2),
-            "w": round(totals["usdc_wrapped"] + totals["usdt_wrapped"], 2),
+            "w": round(sum(totals[f"{a}_wrapped"] for a in assets), 2),
             "o": round(totals["other"], 2),
             "st": team.get("token_status") or "not_fetched",
             "arb": arb["state"],
@@ -161,13 +164,14 @@ def main() -> int:
         return 1
 
     cfg = load_all()
+    classifier = cfg["tokens"]
     rows = build_rows(snapshot, cfg, args.min_tvl)
 
     markets = snapshot.get("chain_markets") or {}
     priority = snapshot.get("priority_chains") or []
-    market_rows = [{"chain": c,
-                    "usdc": round(markets.get(c, {}).get("USDC", 0), 2),
-                    "usdt": round(markets.get(c, {}).get("USDT", 0), 2)}
+    market_rows = [dict({"chain": c},
+                        **{a.lower(): round(markets.get(c, {}).get(a, 0), 2)
+                           for a in classifier.assets})
                    for c in priority if c in markets]
 
     categories = sorted({r["c"] for r in rows})
@@ -175,6 +179,8 @@ def main() -> int:
                          key=Chains(cfg["chains_cfg"]).sort_key)
 
     payload = {
+        "assets": [{"key": a.lower(), "label": classifier.display[a.upper()]}
+                   for a in classifier.assets],
         "generated_at": snapshot.get("generated_at") or utcnow_iso(),
         "built_at": utcnow_iso(),
         "target_chain": snapshot.get("target_chain", "Arbitrum"),

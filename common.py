@@ -124,13 +124,24 @@ class TokenClassifier:
 
     def __init__(self, cfg: dict):
         cfg = cfg or {}
-        core = cfg.get("core") or {}
-        self.core_usdc = {s.upper() for s in (core.get("USDC") or [])}
-        self.core_usdt = {s.upper() for s in (core.get("USDT") or [])}
-
-        wrapped = cfg.get("wrapped") or {}
-        self.wrapped_usdc = [re.compile(p, re.I) for p in (wrapped.get("USDC") or [])]
-        self.wrapped_usdt = [re.compile(p, re.I) for p in (wrapped.get("USDT") or [])]
+        # Assets are whatever config/tokens.yml declares under `core`, so adding a
+        # fourth headline stablecoin is a config change, not a code change.
+        # Keys keep their original casing in YAML ("USDe"), so index by that and
+        # expose the uppercased name - looking the dict up by the uppercased key
+        # silently yields an empty symbol set.
+        core_cfg = cfg.get("core") or {}
+        wrapped_cfg = cfg.get("wrapped") or {}
+        self.assets = []
+        self.core = {}
+        self.wrapped = {}
+        self.display = {}
+        for key, symbols in core_cfg.items():
+            asset = str(key).upper()
+            self.assets.append(asset)
+            self.display[asset] = str(key)
+            self.core[asset] = {str(s).upper() for s in (symbols or [])}
+            self.wrapped[asset] = [re.compile(p, re.I)
+                                   for p in (wrapped_cfg.get(key) or [])]
 
         self.other = {s.upper() for s in (cfg.get("other_stables") or [])}
         self.ignore = [re.compile(p, re.I) for p in (cfg.get("ignore") or [])]
@@ -139,7 +150,7 @@ class TokenClassifier:
         """Return (bucket, asset).
 
         bucket: 'core' | 'wrapped' | 'other' | None (not a stablecoin / ignored)
-        asset:  'USDC' | 'USDT' | 'OTHER' | None
+        asset:  one of self.assets, 'OTHER', or None
         """
         if not symbol:
             return None, None
@@ -150,22 +161,19 @@ class TokenClassifier:
                 return None, None
 
         # Exact core matches win over every pattern.
-        if sym in self.core_usdc:
-            return "core", "USDC"
-        if sym in self.core_usdt:
-            return "core", "USDT"
+        for asset in self.assets:
+            if sym in self.core[asset]:
+                return "core", asset
 
-        # A distinct stablecoin is never a wrapped USDC/USDT, even though several
-        # (USDe, crvUSD) would match the loose catch-all patterns below.
+        # A distinct stablecoin is never a wrapped form of a core asset, even
+        # though several (crvUSD, DAI) would match the loose patterns below.
         if sym in self.other:
             return "other", "OTHER"
 
-        for pat in self.wrapped_usdc:
-            if pat.match(sym):
-                return "wrapped", "USDC"
-        for pat in self.wrapped_usdt:
-            if pat.match(sym):
-                return "wrapped", "USDT"
+        for asset in self.assets:
+            for pat in self.wrapped[asset]:
+                if pat.match(sym):
+                    return "wrapped", asset
 
         # Anything else that still looks like a dollar stablecoin lands in 'other'
         # so a large holder is never silently dropped.
@@ -175,12 +183,12 @@ class TokenClassifier:
         return None, None
 
     def split(self, tokens: dict) -> dict:
-        """Aggregate {symbol: usd} into bucket totals."""
-        out = {
-            "usdc": 0.0, "usdt": 0.0,
-            "usdc_wrapped": 0.0, "usdt_wrapped": 0.0,
-            "other": 0.0,
-        }
+        """Aggregate {symbol: usd} into per-asset and wrapped totals."""
+        out = {"other": 0.0}
+        for asset in self.assets:
+            out[asset.lower()] = 0.0
+            out[f"{asset.lower()}_wrapped"] = 0.0
+
         for sym, usd in (tokens or {}).items():
             try:
                 val = float(usd or 0)
@@ -189,14 +197,10 @@ class TokenClassifier:
             if val <= 0:
                 continue
             bucket, asset = self.classify(sym)
-            if bucket == "core" and asset == "USDC":
-                out["usdc"] += val
-            elif bucket == "core" and asset == "USDT":
-                out["usdt"] += val
-            elif bucket == "wrapped" and asset == "USDC":
-                out["usdc_wrapped"] += val
-            elif bucket == "wrapped" and asset == "USDT":
-                out["usdt_wrapped"] += val
+            if bucket == "core":
+                out[asset.lower()] += val
+            elif bucket == "wrapped":
+                out[f"{asset.lower()}_wrapped"] += val
             elif bucket == "other":
                 out["other"] += val
         return out
