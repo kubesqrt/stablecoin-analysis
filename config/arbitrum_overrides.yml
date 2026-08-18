@@ -1,0 +1,17 @@
+# Manual Arbitrum signal overrides. These ALWAYS win over automatic detection.
+#
+# Use when you know something the data does not: an announcement, a conversation,
+# a testnet deployment, a public roadmap commitment.
+#
+# state: deployed | listed | mentioned | none
+#   deployed  - live on Arbitrum with real usage
+#   listed    - contracts deployed, little or no TVL
+#   mentioned - has publicly indicated Arbitrum (announcement, docs, roadmap)
+#   none      - explicitly NOT on Arbitrum (use to suppress a false positive)
+
+overrides: {}
+  # example:
+  # some-team-slug:
+  #   state: mentioned
+  #   note: "Announced Arbitrum deployment for Q4"
+  #   source: "https://x.com/someteam/status/123"

@@ -1,0 +1,21 @@
+# Optional Tier 3: exact on-chain balances via direct balanceOf reads.
+#
+# DefiLlama covers most teams already. Use this file for what it misses:
+#   - deployments on new chains its adapters do not track yet
+#   - treasury / multisig wallets deliberately excluded from TVL
+#   - any figure you need measured rather than estimated
+#
+# Balances read here are tagged source: "rpc" in the dashboard so they are
+# visibly distinct from DefiLlama-derived numbers.
+#
+# Chain keys must match the `rpc` block in config/rpc.yml.
+
+teams: {}
+  # example:
+  # some-team:
+  #   name: Some Team
+  #   addresses:
+  #     Arbitrum:
+  #       - "0x0000000000000000000000000000000000000000"
+  #     Monad:
+  #       - "0x0000000000000000000000000000000000000000"

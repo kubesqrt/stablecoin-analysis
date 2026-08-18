@@ -1,0 +1,25 @@
+# Manual team bundling overrides.
+#
+# By default a team is `parentProtocolSlug or slug`, which is DefiLlama's own
+# parent-protocol mapping (aave-v2 + aave-v3 -> "Aave"). That is correct for most cases.
+# Use this file where it is not.
+
+# Force several protocol slugs into one team. Left side is the team key you want.
+merge: {}
+  # example:
+  # my-team:
+  #   name: My Team
+  #   slugs: [protocol-a, protocol-b-v2]
+
+# Prevent a protocol from being rolled into its DefiLlama parent (keep it standalone).
+split: []
+  # example:
+  # - some-child-slug
+
+# Override the display name for a team key.
+rename: {}
+  # example:
+  # aave: Aave (Avara)
+
+# Teams to hide from the dashboard entirely.
+exclude: []

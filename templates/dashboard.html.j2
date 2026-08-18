@@ -1,0 +1,685 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Stablecoin Teams — {{ target_chain }} Prospecting</title>
+<style>
+  :root {
+    color-scheme: light;
+    --plane:       #f9f9f7;
+    --surface:     #fcfcfb;
+    --ink:         #0b0b0b;
+    --ink-2:       #52514e;
+    --ink-muted:   #898781;
+    --grid:        #e1e0d9;
+    --baseline:    #c3c2b7;
+    --border:      rgba(11,11,11,0.10);
+    --usdc:        #2a78d6;
+    --usdt:        #eb6834;
+    --good:        #0ca30c;
+    --warning:     #fab219;
+    --serious:     #ec835a;
+    --critical:    #d03b3b;
+    --up:          #006300;
+    --down:        #d03b3b;
+    --wash:        rgba(11,11,11,0.04);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      color-scheme: dark;
+      --plane:     #0d0d0d;
+      --surface:   #1a1a19;
+      --ink:       #ffffff;
+      --ink-2:     #c3c2b7;
+      --ink-muted: #898781;
+      --grid:      #2c2c2a;
+      --baseline:  #383835;
+      --border:    rgba(255,255,255,0.10);
+      --usdc:      #3987e5;
+      --usdt:      #d95926;
+      --up:        #0ca30c;
+      --down:      #e66767;
+      --wash:      rgba(255,255,255,0.05);
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --plane:     #0d0d0d;
+    --surface:   #1a1a19;
+    --ink:       #ffffff;
+    --ink-2:     #c3c2b7;
+    --ink-muted: #898781;
+    --grid:      #2c2c2a;
+    --baseline:  #383835;
+    --border:    rgba(255,255,255,0.10);
+    --usdc:      #3987e5;
+    --usdt:      #d95926;
+    --up:        #0ca30c;
+    --down:      #e66767;
+    --wash:      rgba(255,255,255,0.05);
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--plane);
+    color: var(--ink);
+    font: 14px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 1600px; margin: 0 auto; padding: 24px 20px 64px; }
+
+  header.top { display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-end;
+               justify-content: space-between; margin-bottom: 20px; }
+  h1 { font-size: 20px; font-weight: 650; margin: 0 0 4px; letter-spacing: -0.01em; }
+  .sub { color: var(--ink-2); font-size: 13px; margin: 0; }
+  .theme-toggle {
+    background: var(--surface); color: var(--ink-2); border: 1px solid var(--border);
+    border-radius: 8px; padding: 7px 12px; font: inherit; font-size: 12px; cursor: pointer;
+  }
+  .theme-toggle:hover { background: var(--wash); }
+
+  /* ---- stat tiles ---- */
+  .tiles { display: grid; gap: 12px; margin-bottom: 20px;
+           grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); }
+  .tile { background: var(--surface); border: 1px solid var(--border);
+          border-radius: 12px; padding: 14px 16px; }
+  .tile .label { font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.06em;
+                 color: var(--ink-muted); margin-bottom: 6px; }
+  .tile .value { font-size: 26px; font-weight: 640; letter-spacing: -0.02em; line-height: 1.1; }
+  .tile .note { font-size: 12px; color: var(--ink-2); margin-top: 5px; }
+
+  /* ---- market strip ---- */
+  .panel { background: var(--surface); border: 1px solid var(--border);
+           border-radius: 12px; padding: 14px 16px; margin-bottom: 16px; }
+  .panel h2 { font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em;
+              color: var(--ink-muted); margin: 0 0 4px; font-weight: 600; }
+  .panel .hint { font-size: 12px; color: var(--ink-2); margin: 0 0 12px; }
+  .market { display: grid; gap: 8px 18px;
+            grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); }
+  .market-row { display: grid; grid-template-columns: 92px 1fr auto; gap: 10px;
+                align-items: center; font-size: 12.5px; }
+  .market-row .cname { color: var(--ink-2); white-space: nowrap; overflow: hidden;
+                       text-overflow: ellipsis; }
+  .market-row .amt { color: var(--ink-2); font-variant-numeric: tabular-nums; font-size: 12px; }
+  .market-row.is-target .cname { color: var(--ink); font-weight: 620; }
+
+  /* ---- split bar (USDC / USDT composition) ---- */
+  .bar { display: flex; gap: 2px; height: 9px; align-items: stretch; }
+  .bar span { display: block; min-width: 2px; border-radius: 1px; }
+  .bar span:first-child { border-top-left-radius: 4px; border-bottom-left-radius: 4px; }
+  .bar span:last-child  { border-top-right-radius: 4px; border-bottom-right-radius: 4px; }
+  .seg-usdc { background: var(--usdc); }
+  .seg-usdt { background: var(--usdt); }
+  .seg-empty { background: var(--grid); border-radius: 4px; flex: 1; }
+
+  .legend { display: flex; gap: 14px; align-items: center; font-size: 12px;
+            color: var(--ink-2); }
+  .legend i { width: 10px; height: 10px; border-radius: 3px; display: inline-block;
+              margin-right: 5px; vertical-align: -1px; }
+
+  /* ---- filters ---- */
+  .filters { display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end;
+             margin-bottom: 14px; }
+  .field { display: flex; flex-direction: column; gap: 4px; }
+  .field label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em;
+                 color: var(--ink-muted); }
+  .field input, .field select {
+    background: var(--surface); color: var(--ink); border: 1px solid var(--border);
+    border-radius: 8px; padding: 7px 10px; font: inherit; font-size: 13px; min-width: 132px;
+  }
+  .field input:focus, .field select:focus { outline: 2px solid var(--usdc); outline-offset: 1px; }
+  .btn { background: var(--surface); color: var(--ink); border: 1px solid var(--border);
+         border-radius: 8px; padding: 8px 13px; font: inherit; font-size: 13px; cursor: pointer; }
+  .btn:hover { background: var(--wash); }
+  .btn.primary { background: var(--usdc); border-color: var(--usdc); color: #fff; }
+  .btn.primary:hover { filter: brightness(1.08); }
+  .toggles { display: flex; gap: 14px; align-items: center; font-size: 12.5px;
+             color: var(--ink-2); }
+  .toggles label { display: flex; gap: 6px; align-items: center; cursor: pointer; }
+
+  .count { font-size: 12.5px; color: var(--ink-2); margin: 0 0 10px; }
+  .count b { color: var(--ink); font-weight: 620; }
+
+  /* ---- table ---- */
+  .table-wrap { background: var(--surface); border: 1px solid var(--border);
+                border-radius: 12px; overflow-x: auto; }
+  table { border-collapse: collapse; width: 100%; font-size: 13px; }
+  thead th {
+    position: sticky; top: 0; z-index: 2; background: var(--surface);
+    text-align: right; font-weight: 600; font-size: 11.5px; text-transform: uppercase;
+    letter-spacing: 0.05em; color: var(--ink-muted); padding: 11px 12px;
+    border-bottom: 1px solid var(--baseline); white-space: nowrap; cursor: pointer;
+    user-select: none;
+  }
+  thead th:first-child, thead th.left { text-align: left; }
+  thead th:hover { color: var(--ink); }
+  thead th .arrow { opacity: 0.45; font-size: 10px; margin-left: 3px; }
+  tbody td { padding: 9px 12px; border-bottom: 1px solid var(--grid); text-align: right;
+             font-variant-numeric: tabular-nums; white-space: nowrap; }
+  tbody td.left { text-align: left; font-variant-numeric: normal; }
+  tbody tr.team { cursor: pointer; }
+  tbody tr.team:hover { background: var(--wash); }
+  tbody tr.prospect td.name-cell { box-shadow: inset 3px 0 0 var(--critical); }
+
+  .tname { font-weight: 600; color: var(--ink); display: flex; align-items: center; gap: 6px; }
+  .tname .caret { color: var(--ink-muted); font-size: 10px; width: 8px; }
+  .tmeta { font-size: 11.5px; color: var(--ink-muted); margin-top: 1px; }
+  .tmeta a { color: var(--ink-muted); }
+  .muted { color: var(--ink-muted); }
+  .zero { color: var(--ink-muted); }
+
+  .delta.up { color: var(--up); }
+  .delta.down { color: var(--down); }
+
+  .badge { display: inline-flex; align-items: center; gap: 5px; font-size: 12px;
+           font-weight: 560; white-space: nowrap; }
+  .badge .dot { width: 8px; height: 8px; border-radius: 50%; flex: none; }
+  .badge.deployed  .dot { background: var(--good); }
+  .badge.listed    .dot { background: var(--warning); }
+  .badge.mentioned .dot { background: var(--serious); }
+  .badge.none      .dot { background: var(--critical); }
+  .badge.deployed  { color: var(--ink-2); }
+  .badge.none      { color: var(--ink); }
+
+  .flag { font-size: 11px; color: var(--ink-muted); border: 1px solid var(--border);
+          border-radius: 5px; padding: 1px 5px; margin-left: 6px; }
+
+  /* ---- expanded detail ---- */
+  tr.detail > td { background: var(--plane); padding: 0 12px 14px; border-bottom: 1px solid var(--grid); }
+  .detail-inner { padding-top: 4px; }
+  .detail-inner h3 { font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.05em;
+                     color: var(--ink-muted); margin: 10px 0 6px; font-weight: 600; }
+  table.chains { width: auto; min-width: 520px; font-size: 12.5px; }
+  table.chains th { position: static; background: none; border-bottom: 1px solid var(--grid);
+                    padding: 6px 12px 6px 0; cursor: default; }
+  table.chains td { padding: 5px 12px 5px 0; border-bottom: 1px solid var(--grid); }
+  table.chains tr.is-target td { font-weight: 620; }
+  .why { font-size: 12.5px; color: var(--ink-2); margin: 6px 0 0; }
+  .why a { color: var(--usdc); }
+
+  .empty { padding: 40px 16px; text-align: center; color: var(--ink-muted); }
+  footer { margin-top: 22px; font-size: 12px; color: var(--ink-muted); line-height: 1.6; }
+  footer code { background: var(--wash); padding: 1px 5px; border-radius: 4px; }
+
+  @media (max-width: 720px) {
+    .wrap { padding: 16px 12px 48px; }
+    .tile .value { font-size: 22px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="top">
+    <div>
+      <h1>Stablecoin balances by team</h1>
+      <p class="sub">
+        USDC and USDT held across every chain, bundled per team &mdash;
+        flagged by whether they are already on {{ target_chain }}.
+        Data as of <span id="asof">{{ generated_at }}</span>.
+      </p>
+    </div>
+    <button class="theme-toggle" id="theme-toggle" type="button">Toggle theme</button>
+  </header>
+
+  <section class="tiles" id="tiles"></section>
+
+  <section class="panel">
+    <h2>Chain stablecoin market size</h2>
+    <p class="hint">Total USDC and USDT in circulation per chain &mdash; the market a team would be
+      moving into or out of. Bars are shared-scale across chains.</p>
+    <div class="market" id="market"></div>
+  </section>
+
+  <section class="filters">
+    <div class="field">
+      <label for="f-search">Search</label>
+      <input id="f-search" type="search" placeholder="Team or category" autocomplete="off">
+    </div>
+    <div class="field">
+      <label for="f-min">Min TVL ($)</label>
+      <input id="f-min" type="number" step="100000" value="500000">
+    </div>
+    <div class="field">
+      <label for="f-max">Max TVL ($)</label>
+      <input id="f-max" type="number" step="100000" value="10000000">
+    </div>
+    <div class="field">
+      <label for="f-arb">{{ target_chain }} status</label>
+      <select id="f-arb">
+        <option value="none" selected>No signal (prospects)</option>
+        <option value="any">Any</option>
+        <option value="not-deployed">Not deployed</option>
+        <option value="deployed">Deployed</option>
+        <option value="listed">Listed only</option>
+        <option value="mentioned">Mentioned only</option>
+      </select>
+    </div>
+    <div class="field">
+      <label for="f-cat">Category</label>
+      <select id="f-cat"><option value="">All</option></select>
+    </div>
+    <div class="field">
+      <label for="f-chain">Holds stables on</label>
+      <select id="f-chain"><option value="">Any chain</option></select>
+    </div>
+    <button class="btn primary" id="reset" type="button">Reset to prospects</button>
+    <button class="btn" id="showall" type="button">Show all teams</button>
+    <button class="btn" id="csv" type="button">Export CSV</button>
+  </section>
+
+  <div class="filters" style="margin-top:-4px">
+    <div class="toggles">
+      <label><input type="checkbox" id="t-wrapped"> Count wrapped / receipt tokens</label>
+      <label><input type="checkbox" id="t-hasdata" checked> Only teams with a token breakdown</label>
+    </div>
+    <div class="legend" style="margin-left:auto">
+      <span><i style="background:var(--usdc)"></i>USDC</span>
+      <span><i style="background:var(--usdt)"></i>USDT</span>
+    </div>
+  </div>
+
+  <p class="count" id="count"></p>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th class="left" data-sort="n">Team</th>
+          <th data-sort="usdc">USDC</th>
+          <th data-sort="usdt">USDT</th>
+          <th class="left" style="cursor:default">Split</th>
+          <th data-sort="core">Stables</th>
+          <th data-sort="d7">7d</th>
+          <th data-sort="d30">30d</th>
+          <th data-sort="o">Other stables</th>
+          <th data-sort="t">Total TVL</th>
+          <th class="left" data-sort="top">Top chain</th>
+          <th class="left" data-sort="arb">{{ target_chain }}</th>
+        </tr>
+      </thead>
+      <tbody id="tbody"></tbody>
+    </table>
+    <div class="empty" id="empty" hidden>No teams match these filters.</div>
+  </div>
+
+  <footer>
+    <p>
+      Balances are the latest per-chain token breakdown published by DefiLlama&rsquo;s protocol
+      adapters, which read each team&rsquo;s pool and vault contracts directly; teams are bundled
+      by DefiLlama&rsquo;s parent-protocol mapping. Rows marked
+      <span class="flag">rpc</span> were measured by reading contract balances on-chain.
+      <span class="flag">no token data</span> means the adapter publishes no token split &mdash;
+      not that the team holds nothing.
+    </p>
+    <p>Refresh with <code>python fetch_llama.py &amp;&amp; python build.py</code>.</p>
+  </footer>
+</div>
+
+<script id="payload" type="application/json">{{ payload_json|safe }}</script>
+<script>
+(function () {
+  "use strict";
+
+  var DATA = JSON.parse(document.getElementById("payload").textContent);
+  var ROWS = DATA.rows;
+  var TARGET = DATA.target_chain;
+
+  var ARB_LABEL = {
+    deployed:  "Deployed",
+    listed:    "Listed only",
+    mentioned: "Mentioned",
+    none:      "No signal"
+  };
+
+  // ---- formatting -------------------------------------------------------
+  function usd(v) {
+    if (v === null || v === undefined) return "—";
+    var a = Math.abs(v);
+    if (a >= 1e9) return "$" + (v / 1e9).toFixed(2) + "B";
+    if (a >= 1e6) return "$" + (v / 1e6).toFixed(2) + "M";
+    if (a >= 1e3) return "$" + (v / 1e3).toFixed(0) + "k";
+    if (a < 1) return "$0";
+    return "$" + v.toFixed(0);
+  }
+  function signed(v) {
+    if (v === null || v === undefined) return "—";
+    if (Math.abs(v) < 1) return "—";
+    return (v > 0 ? "+" : "−") + usd(Math.abs(v)).slice(1);
+  }
+  function esc(s) {
+    return String(s === null || s === undefined ? "" : s)
+      .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  }
+
+  // Wrapped positions are a claim on the underlying, so they are added to the
+  // headline only when explicitly asked for.
+  function coreOf(r)  { return r.core + (state.wrapped ? r.w : 0); }
+  function usdcOf(r)  { return r.usdc; }
+  function usdtOf(r)  { return r.usdt; }
+
+  // ---- state ------------------------------------------------------------
+  var state = {
+    search: "", min: 500000, max: 10000000, arb: "none",
+    cat: "", chain: "", wrapped: false, hasdata: true,
+    sort: "core", dir: -1, open: {}
+  };
+
+  var el = {
+    tbody: document.getElementById("tbody"),
+    empty: document.getElementById("empty"),
+    count: document.getElementById("count"),
+    tiles: document.getElementById("tiles"),
+    market: document.getElementById("market")
+  };
+
+  // ---- filtering --------------------------------------------------------
+  function passes(r) {
+    if (state.min && r.t < state.min) return false;
+    if (state.max && r.t > state.max) return false;
+    if (state.cat && r.c !== state.cat) return false;
+    if (state.chain && !(r.ch && r.ch[state.chain])) return false;
+    if (state.hasdata && (r.st !== "ok" && r.st !== "partial")) return false;
+    if (state.search) {
+      var q = state.search.toLowerCase();
+      if (r.n.toLowerCase().indexOf(q) < 0 && r.c.toLowerCase().indexOf(q) < 0) return false;
+    }
+    var a = state.arb;
+    if (a === "none" && r.arb !== "none") return false;
+    if (a === "not-deployed" && r.arb === "deployed") return false;
+    if (a === "deployed" && r.arb !== "deployed") return false;
+    if (a === "listed" && r.arb !== "listed") return false;
+    if (a === "mentioned" && r.arb !== "mentioned") return false;
+    return true;
+  }
+
+  function sorted(rows) {
+    var k = state.sort, d = state.dir;
+    return rows.slice().sort(function (x, y) {
+      var a, b;
+      if (k === "core") { a = coreOf(x); b = coreOf(y); }
+      else { a = x[k]; b = y[k]; }
+      if (a === null || a === undefined) a = -Infinity;
+      if (b === null || b === undefined) b = -Infinity;
+      if (typeof a === "string" || typeof b === "string") {
+        a = String(a).toLowerCase(); b = String(b).toLowerCase();
+        return a < b ? -d : a > b ? d : 0;
+      }
+      return (a - b) * d;
+    });
+  }
+
+  // ---- rendering --------------------------------------------------------
+  function splitBar(r, scale) {
+    var c = usdcOf(r), t = usdtOf(r), total = c + t;
+    if (total <= 0 || !scale) return '<div class="bar"><span class="seg-empty"></span></div>';
+    var width = Math.max(3, Math.min(100, (total / scale) * 100));
+    var cp = (c / total) * 100, tp = (t / total) * 100;
+    var title = "USDC " + usd(c) + " · USDT " + usd(t);
+    var html = '<div class="bar" style="width:' + width.toFixed(1) + '%" title="' + esc(title) + '">';
+    if (c > 0) html += '<span class="seg-usdc" style="flex:' + cp.toFixed(2) + '"></span>';
+    if (t > 0) html += '<span class="seg-usdt" style="flex:' + tp.toFixed(2) + '"></span>';
+    return html + "</div>";
+  }
+
+  function statusFlag(r) {
+    if (r.st === "unavailable" || r.st === "not_fetched")
+      return '<span class="flag">no token data</span>';
+    if (r.st === "too_large") return '<span class="flag">too large to parse</span>';
+    if (r.st === "error") return '<span class="flag">fetch failed</span>';
+    if (r.st === "partial") return '<span class="flag">partial</span>';
+    return "";
+  }
+
+  function rowHtml(r, scale) {
+    var isOpen = !!state.open[r.k];
+    var core = coreOf(r);
+    var cls = "team" + (r.arb === "none" ? " prospect" : "");
+    var site = r.u ? ' · <a href="' + esc(r.u) + '" target="_blank" rel="noopener noreferrer">site</a>' : "";
+
+    var html = '<tr class="' + cls + '" data-k="' + esc(r.k) + '">' +
+      '<td class="left name-cell">' +
+        '<div class="tname"><span class="caret">' + (isOpen ? "▾" : "▸") + "</span>" +
+          esc(r.n) + statusFlag(r) + "</div>" +
+        '<div class="tmeta">' + esc(r.c) + site + "</div></td>" +
+      '<td>' + (r.usdc > 0 ? usd(r.usdc) : '<span class="zero">—</span>') + "</td>" +
+      '<td>' + (r.usdt > 0 ? usd(r.usdt) : '<span class="zero">—</span>') + "</td>" +
+      '<td class="left" style="min-width:120px">' + splitBar(r, scale) + "</td>" +
+      "<td><b>" + usd(core) + "</b></td>" +
+      '<td class="delta ' + (r.d7 > 0 ? "up" : r.d7 < 0 ? "down" : "") + '">' + signed(r.d7) + "</td>" +
+      '<td class="delta ' + (r.d30 > 0 ? "up" : r.d30 < 0 ? "down" : "") + '">' + signed(r.d30) + "</td>" +
+      "<td>" + (r.o > 0 ? usd(r.o) : '<span class="zero">—</span>') + "</td>" +
+      '<td class="muted">' + usd(r.t) + "</td>" +
+      '<td class="left muted">' + esc(r.top || "—") + "</td>" +
+      '<td class="left"><span class="badge ' + r.arb + '"><span class="dot"></span>' +
+        ARB_LABEL[r.arb] + (r.arb === "deployed" && r.arbTvl > 0 ? " · " + usd(r.arbTvl) : "") +
+      "</span></td></tr>";
+
+    if (isOpen) html += detailHtml(r);
+    return html;
+  }
+
+  function detailHtml(r) {
+    var chains = Object.keys(r.ch || {}).map(function (c) {
+      var v = r.ch[c];
+      return { chain: c, usdc: v.usdc || 0, usdt: v.usdt || 0,
+               other: v.other || 0, wrapped: v.wrapped || 0, src: v.src || "llama" };
+    }).sort(function (a, b) { return (b.usdc + b.usdt) - (a.usdc + a.usdt); });
+
+    var rows = chains.map(function (c) {
+      return '<tr' + (c.chain === TARGET ? ' class="is-target"' : "") + ">" +
+        "<td>" + esc(c.chain) + (c.src === "rpc" ? ' <span class="flag">rpc</span>' : "") + "</td>" +
+        '<td style="text-align:right">' + (c.usdc > 0 ? usd(c.usdc) : "—") + "</td>" +
+        '<td style="text-align:right">' + (c.usdt > 0 ? usd(c.usdt) : "—") + "</td>" +
+        '<td style="text-align:right">' + (c.wrapped > 0 ? usd(c.wrapped) : "—") + "</td>" +
+        '<td style="text-align:right">' + (c.other > 0 ? usd(c.other) : "—") + "</td></tr>";
+    }).join("");
+
+    var body = rows
+      ? '<table class="chains"><thead><tr><th style="text-align:left">Chain</th>' +
+        '<th style="text-align:right">USDC</th><th style="text-align:right">USDT</th>' +
+        '<th style="text-align:right">Wrapped</th><th style="text-align:right">Other stables</th>' +
+        "</tr></thead><tbody>" + rows + "</tbody></table>"
+      : '<p class="why">No per-chain token breakdown published for this team.</p>';
+
+    var deployed = (r.chains || []).join(", ") || "—";
+    var why = '<p class="why"><b>' + TARGET + ":</b> " + esc(r.arbWhy || "") +
+      (r.arbSrc && /^https?:/.test(r.arbSrc)
+        ? ' · <a href="' + esc(r.arbSrc) + '" target="_blank" rel="noopener noreferrer">source</a>'
+        : r.arbSrc ? ' <span class="muted">(' + esc(r.arbSrc) + ")</span>" : "") + "</p>";
+
+    return '<tr class="detail"><td colspan="11"><div class="detail-inner">' +
+      "<h3>Stablecoins by chain</h3>" + body + why +
+      '<p class="why"><b>Chains deployed:</b> <span class="muted">' + esc(deployed) + "</span>" +
+      (r.np > 1 ? ' · <span class="muted">' + r.np + " protocols bundled</span>" : "") +
+      "</p></div></td></tr>";
+  }
+
+  function render() {
+    var rows = ROWS.filter(passes);
+    var scale = rows.reduce(function (m, r) { return Math.max(m, usdcOf(r) + usdtOf(r)); }, 0);
+    var view = sorted(rows);
+
+    el.tbody.innerHTML = view.map(function (r) { return rowHtml(r, scale); }).join("");
+    el.empty.hidden = view.length > 0;
+
+    var total = rows.reduce(function (s, r) { return s + coreOf(r); }, 0);
+    var noSignal = rows.filter(function (r) { return r.arb === "none"; });
+    el.count.innerHTML = "<b>" + view.length + "</b> teams · " +
+      "<b>" + usd(total) + "</b> in USDC + USDT · " +
+      "<b>" + noSignal.length + "</b> with no " + TARGET + " signal";
+
+    document.querySelectorAll("thead th[data-sort]").forEach(function (th) {
+      var a = th.querySelector(".arrow");
+      if (a) a.remove();
+      if (th.dataset.sort === state.sort) {
+        var s = document.createElement("span");
+        s.className = "arrow";
+        s.textContent = state.dir < 0 ? "▾" : "▴";
+        th.appendChild(s);
+      }
+    });
+    renderTiles(rows);
+  }
+
+  function renderTiles(rows) {
+    var prospects = rows.filter(function (r) { return r.arb === "none"; });
+    var pot = prospects.reduce(function (s, r) { return s + coreOf(r); }, 0);
+    var biggest = prospects.reduce(function (m, r) {
+      return (!m || coreOf(r) > coreOf(m)) ? r : m;
+    }, null);
+    var withData = rows.filter(function (r) { return r.st === "ok" || r.st === "partial"; });
+
+    var tiles = [
+      { label: "Teams in view", value: String(rows.length),
+        note: withData.length + " with a token breakdown" },
+      { label: "Not on " + TARGET, value: String(prospects.length),
+        note: (rows.length ? Math.round(prospects.length / rows.length * 100) : 0) + "% of teams in view" },
+      { label: "Stablecoins off " + TARGET, value: usd(pot),
+        note: "USDC + USDT held by those teams" },
+      { label: "Largest single prospect", value: biggest ? usd(coreOf(biggest)) : "—",
+        note: biggest ? biggest.n : "no teams match" }
+    ];
+
+    el.tiles.innerHTML = tiles.map(function (t) {
+      return '<div class="tile"><div class="label">' + esc(t.label) + "</div>" +
+        '<div class="value">' + esc(t.value) + "</div>" +
+        '<div class="note">' + esc(t.note) + "</div></div>";
+    }).join("");
+  }
+
+  function renderMarket() {
+    var m = DATA.markets || [];
+    var max = m.reduce(function (a, x) { return Math.max(a, x.usdc + x.usdt); }, 0);
+    el.market.innerHTML = m.map(function (x) {
+      var tot = x.usdc + x.usdt;
+      var w = max ? Math.max(2, (tot / max) * 100) : 0;
+      var cp = tot ? (x.usdc / tot) * 100 : 0, tp = tot ? (x.usdt / tot) * 100 : 0;
+      return '<div class="market-row' + (x.chain === TARGET ? " is-target" : "") + '">' +
+        '<div class="cname">' + esc(x.chain) + "</div>" +
+        '<div><div class="bar" style="width:' + w.toFixed(1) + '%" title="USDC ' +
+          usd(x.usdc) + " · USDT " + usd(x.usdt) + '">' +
+          (x.usdc > 0 ? '<span class="seg-usdc" style="flex:' + cp.toFixed(2) + '"></span>' : "") +
+          (x.usdt > 0 ? '<span class="seg-usdt" style="flex:' + tp.toFixed(2) + '"></span>' : "") +
+        "</div></div>" +
+        '<div class="amt">' + usd(tot) + "</div></div>";
+    }).join("");
+  }
+
+  // ---- CSV --------------------------------------------------------------
+  function exportCsv() {
+    var rows = sorted(ROWS.filter(passes));
+    var head = ["team", "category", "url", "usdc", "usdt", "stables_total",
+                "wrapped", "other_stables", "total_tvl", "change_7d", "change_30d",
+                "top_chain", TARGET.toLowerCase() + "_status",
+                TARGET.toLowerCase() + "_tvl", "status_reason", "chains", "token_data"];
+    var lines = [head.join(",")];
+    rows.forEach(function (r) {
+      var cells = [r.n, r.c, r.u || "", r.usdc, r.usdt, coreOf(r), r.w, r.o, r.t,
+                   r.d7 === null ? "" : r.d7, r.d30 === null ? "" : r.d30,
+                   r.top || "", r.arb, r.arbTvl, r.arbWhy || "",
+                   (r.chains || []).join(" | "), r.st];
+      lines.push(cells.map(function (c) {
+        var s = String(c === null || c === undefined ? "" : c);
+        return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+      }).join(","));
+    });
+    var blob = new Blob([lines.join("\n")], { type: "text/csv;charset=utf-8" });
+    var a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "stablecoin-teams-" + (DATA.generated_at || "").slice(0, 10) + ".csv";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(function () { URL.revokeObjectURL(a.href); }, 1000);
+  }
+
+  // ---- wiring -----------------------------------------------------------
+  function fill(id, values) {
+    var sel = document.getElementById(id);
+    values.forEach(function (v) {
+      var o = document.createElement("option");
+      o.value = v; o.textContent = v;
+      sel.appendChild(o);
+    });
+  }
+  fill("f-cat", DATA.categories || []);
+  fill("f-chain", DATA.chains || []);
+
+  function bind(id, key, transform) {
+    var node = document.getElementById(id);
+    node.addEventListener(node.tagName === "SELECT" || node.type === "checkbox"
+      ? "change" : "input", function () {
+      state[key] = transform ? transform(node) : node.value;
+      render();
+    });
+    return node;
+  }
+  bind("f-search", "search");
+  bind("f-min", "min", function (n) { return parseFloat(n.value) || 0; });
+  bind("f-max", "max", function (n) { return parseFloat(n.value) || Infinity; });
+  bind("f-arb", "arb");
+  bind("f-cat", "cat");
+  bind("f-chain", "chain");
+  bind("t-wrapped", "wrapped", function (n) { return n.checked; });
+  bind("t-hasdata", "hasdata", function (n) { return n.checked; });
+
+  document.querySelectorAll("thead th[data-sort]").forEach(function (th) {
+    th.addEventListener("click", function () {
+      var k = th.dataset.sort;
+      if (state.sort === k) state.dir = -state.dir;
+      else { state.sort = k; state.dir = (k === "n" || k === "top" || k === "arb") ? 1 : -1; }
+      render();
+    });
+  });
+
+  el.tbody.addEventListener("click", function (e) {
+    if (e.target.closest("a")) return;
+    var tr = e.target.closest("tr.team");
+    if (!tr) return;
+    var k = tr.dataset.k;
+    if (state.open[k]) delete state.open[k]; else state.open[k] = true;
+    render();
+  });
+
+  function applyPreset(preset) {
+    var f = {
+      prospects: { min: 500000, max: 10000000, arb: "none", cat: "", chain: "",
+                   search: "", hasdata: true },
+      all:       { min: 0, max: Infinity, arb: "any", cat: "", chain: "",
+                   search: "", hasdata: false }
+    }[preset];
+    Object.keys(f).forEach(function (k) { state[k] = f[k]; });
+    document.getElementById("f-min").value = f.min || "";
+    document.getElementById("f-max").value = isFinite(f.max) ? f.max : "";
+    document.getElementById("f-arb").value = f.arb;
+    document.getElementById("f-cat").value = "";
+    document.getElementById("f-chain").value = "";
+    document.getElementById("f-search").value = "";
+    document.getElementById("t-hasdata").checked = f.hasdata;
+    render();
+  }
+  document.getElementById("reset").addEventListener("click", function () { applyPreset("prospects"); });
+  document.getElementById("showall").addEventListener("click", function () { applyPreset("all"); });
+  document.getElementById("csv").addEventListener("click", exportCsv);
+
+  document.getElementById("theme-toggle").addEventListener("click", function () {
+    var root = document.documentElement;
+    var dark = root.getAttribute("data-theme") === "dark" ||
+      (!root.getAttribute("data-theme") &&
+        window.matchMedia("(prefers-color-scheme: dark)").matches);
+    root.setAttribute("data-theme", dark ? "light" : "dark");
+  });
+
+  var d = new Date(DATA.generated_at);
+  if (!isNaN(d)) document.getElementById("asof").textContent = d.toLocaleString();
+
+  renderMarket();
+  render();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,111 @@
+# How token symbols reported by DefiLlama adapters are classified.
+# Measured across a 60-protocol sample in the target band: 737 distinct symbols appear,
+# so classification is rule-based, not an exhaustive list.
+#
+# Buckets:
+#   core           -> counts as USDC / USDT (the headline numbers)
+#   wrapped        -> a claim on USDC/USDT (aTokens, vault receipts). OFF by default, toggle in UI.
+#   other_stables  -> other stablecoins, reported in a separate column, NEVER mixed into core.
+
+core:
+  USDC:
+    - USDC
+    - USDC.E      # bridged USDC on Arbitrum / Polygon / Avalanche / Optimism
+    - USDCE
+    - USDC.B
+    - USDBC       # Base bridged USDC
+    - AXLUSDC     # Axelar bridged
+    - USDC_
+    - USDC-USD
+  USDT:
+    - USDT
+    - USDT0       # LayerZero OFT USDT. Material: $5.7M in the sample. This IS USDT.
+    - USDT.E
+    - USDTE
+    - USDT_
+    - BSC-USD     # Binance-Peg BSC-USD (18 decimals on chain, but USD value here)
+    - USDTB
+
+# Receipt / wrapped positions that represent underlying USDC or USDT exposure.
+# Matched by regex against the uppercased symbol. Excluded from headline figures by default.
+wrapped:
+  USDC:
+    - '^A[A-Z]*USDC[A-Z0-9]*$'      # aUSDC, aArbUSDC, aEthUSDC, aBasUSDC ...
+    - '^C[A-Z]*USDC[A-Z0-9]*$'      # cUSDC, csCBUSDC ...
+    - '^[VY][A-Z]*USDC[A-Z0-9]*$'   # vbUSDC, yUSDC, yvUSDC ...
+    - '^S[A-Z]*USDC[A-Z0-9]*$'      # sUSDC, sUSDC-ARB ...
+    - '^GT?USDC[A-Z0-9]*$'          # gUSDC, gtUSDCf ...
+    - '^BBQUSDC$'
+    - '^ARBUSDC$'
+    - '^AVALANCHEUSDC$'
+    - '^[A-Z]*USDC[0-9]*$'          # catch-all: contains USDC but not an exact core match
+  USDT:
+    - '^A[A-Z]*USDT[A-Z0-9]*$'      # aArbUSDT, aEthUSDT ...
+    - '^C[A-Z]*USDT[A-Z0-9]*$'
+    - '^[VY][A-Z]*USDT[A-Z0-9]*$'
+    - '^S[A-Z]*USDT[A-Z0-9]*$'      # syrupUSDT, sUSDT ...
+    - '^[A-Z]*USDT[0-9]*$'          # catch-all
+
+# Distinct stablecoins. Shown in their own column so a large stablecoin holder is never missed,
+# but never counted as USDC or USDT.
+other_stables:
+  - USDE
+  - SUSDE
+  - DAI
+  - SDAI
+  - USDS
+  - SUSDS
+  - USD1
+  - FDUSD
+  - USDG
+  - PYUSD
+  - BUSD
+  - TUSD
+  - LUSD
+  - GHO
+  - CRVUSD
+  - FRAX
+  - SFRAX
+  - FRXUSD
+  - SFRXUSD
+  - USDY
+  - USDM
+  - MUSD
+  - CUSD
+  - PUSD
+  - USDN
+  - USDN0
+  - USN
+  - SUSN
+  - SAVUSD
+  - RLUSD
+  - USDF
+  - DOLA
+  - MIM
+  - USDP
+  - USDD
+  - USDX
+  - DEUSD
+  - USR
+  - RUSD
+  - BYUSD
+  - YVUSD
+  - CTUSD
+  - USD*
+  - ULTRA_USD
+  - WSTKSCUSD
+  - STKSCUSD
+  - USDA
+  - EURC          # non-USD pegs still tracked here for completeness
+  - CEUR
+  - EURS
+  - EURT
+
+# Symbols to ignore entirely (LP tokens, PT/YT tranches, ambiguous derivatives).
+# Matched as regex; these are excluded from every bucket.
+ignore:
+  - '^PT-'          # Pendle principal tokens
+  - '^YT-'          # Pendle yield tokens
+  - '.*3CRV-F$'     # Curve LP tokens
+  - '.*-LP$'
+  - '^LP-'

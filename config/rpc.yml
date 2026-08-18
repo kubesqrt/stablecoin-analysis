@@ -1,0 +1,110 @@
+# Tier 3 on-chain configuration: public RPC endpoints, Multicall3, token addresses.
+#
+# Multicall3 is deployed at the SAME address on every chain listed here, including
+# Monad, Hyperliquid and Plasma (verified against mds1/multicall3 deployments.json).
+multicall3: "0xcA11bde05977b3631167028862bE2a173976CA11"
+
+# Decimals are ALWAYS read on-chain via decimals() and cached - never taken from this file.
+# BSC USDC and USDT are 18 decimals, not 6; hardcoding 6 would inflate them by 1e12.
+# Addresses marked `verified: false` are probed with symbol()/decimals() at startup and
+# dropped (not guessed) if the probe fails.
+
+chains:
+  Ethereum:
+    chain_id: 1
+    rpc: ["https://ethereum-rpc.publicnode.com", "https://eth.llamarpc.com", "https://rpc.ankr.com/eth"]
+    tokens:
+      USDC: {address: "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48", verified: true}
+      USDT: {address: "0xdAC17F958D2ee523a2206206994597C13D831ec7", verified: true}
+
+  Arbitrum:
+    chain_id: 42161
+    rpc: ["https://arb1.arbitrum.io/rpc", "https://arbitrum-one-rpc.publicnode.com"]
+    tokens:
+      USDC:    {address: "0xaf88d065e77c8cC2239327C5EDb3A432268e5831", verified: true}
+      USDC.e:  {address: "0xFF970A61A04b1cA14834A43f5dE4533eBDDB5CC8", verified: true}
+      USDT:    {address: "0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9", verified: true}  # USDT0
+
+  Base:
+    chain_id: 8453
+    rpc: ["https://mainnet.base.org", "https://base-rpc.publicnode.com"]
+    tokens:
+      USDC: {address: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913", verified: true}
+      USDT: {address: "0xfde4C96c8593536E31F229EA8f37b2ADa2699bb2", verified: true}  # bridged
+
+  Optimism:
+    chain_id: 10
+    rpc: ["https://mainnet.optimism.io", "https://optimism-rpc.publicnode.com"]
+    tokens:
+      USDC:        {address: "0x0b2C639c533813f4Aa9D7837CAf62653d097Ff85", verified: true}
+      USDC.e:      {address: "0x7F5c764cBc14f9669B88837ca1490cCa17c31607", verified: true}
+      USDT:        {address: "0x01bFF41798a0BcF287b996046Ca68b395DbC1071", verified: true}   # USDT0
+      USDT-legacy: {address: "0x94b008aA00579c1307B0EF2c499aD98a8ce58e58", verified: true}  # still holds most balance
+
+  Polygon:
+    chain_id: 137
+    rpc: ["https://polygon-bor-rpc.publicnode.com", "https://polygon.drpc.org"]
+    tokens:
+      USDC:   {address: "0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359", verified: true}
+      USDC.e: {address: "0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174", verified: true}
+      USDT:   {address: "0xc2132D05D31c914a87C6611C10748AEb04B58e8F", verified: true}
+
+  BSC:
+    chain_id: 56
+    rpc: ["https://bsc-rpc.publicnode.com", "https://bsc-dataseed.binance.org"]
+    tokens:  # both 18 decimals - confirmed on-chain at runtime
+      USDC: {address: "0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d", verified: true}
+      USDT: {address: "0x55d398326f99059fF775485246999027B3197955", verified: true}
+
+  Avalanche:
+    chain_id: 43114
+    rpc: ["https://api.avax.network/ext/bc/C/rpc", "https://avalanche-c-chain-rpc.publicnode.com"]
+    tokens:
+      USDC:   {address: "0xB97EF9Ef8734C71904D8002F8b6Bc66Dd9c48a6E", verified: true}
+      USDC.e: {address: "0xA7D7079b0FEaD91F3e65f86E8915Cb59c1a4C664", verified: true}
+      USDT:   {address: "0x9702230a8Ea53601f5cD2dc00fDBc13d4dF4A8c7", verified: true}
+
+  Monad:
+    chain_id: 143
+    rpc: ["https://rpc.monad.xyz", "https://rpc2.monad.xyz", "https://monad-mainnet.drpc.org"]
+    rate_limit_rps: 15
+    tokens:
+      USDC: {address: "0x754704Bc059F8C67012fEd69BC8A327a5aafb603", verified: true}
+      USDT: {address: "0xe7cd86e13AC4309349F30B3435a9d337750fC82D", verified: true}  # USDT0
+
+  Hyperliquid:
+    chain_id: 999
+    rpc: ["https://rpc.hyperliquid.xyz/evm"]
+    rate_limit_rps: 1        # public endpoint allows ~100 requests/minute
+    tokens:
+      USDC: {address: "0xb88339CB7199b77E23DB6E890353E22632Ba630f", verified: true}
+      USDT: {address: "0xB8CE59FC3717ada4C02eaDF9682A9e934F625ebb", verified: true}  # USDT0
+
+  Plasma:
+    chain_id: 9745
+    rpc: ["https://rpc.plasma.to"]
+    tokens:
+      USDT: {address: "0xB8CE59FC3717ada4C02eaDF9682A9e934F625ebb", verified: true}  # USDT0
+      # No USDC address confirmed on Plasma from any primary source. Plasma is USDT-first.
+      # Add here once verified on plasmascan.to; until then USDC on Plasma reads as unavailable.
+
+  Berachain:
+    chain_id: 80094
+    rpc: ["https://rpc.berachain.com", "https://berachain-rpc.publicnode.com"]
+    tokens:
+      USDC.e: {address: "0x549943e04f40284185054145c6E4e9568C1D3241", verified: true}  # Stargate bridged
+      USDT:   {address: "0x779Ded0c9e1022225f8E0630b35a9b54bE713736", verified: true}  # USDT0
+
+  Sonic:
+    chain_id: 146
+    rpc: ["https://rpc.soniclabs.com", "https://sonic-rpc.publicnode.com"]
+    tokens:
+      USDC: {address: "0x29219dd400f2Bf60E5a23d13Be72B486D4038894", verified: true}
+      USDT: {address: "0x6047828dc181963ba44974801ff68e538da5eaf9", verified: true}
+
+  Unichain:
+    chain_id: 130
+    rpc: ["https://mainnet.unichain.org", "https://unichain-rpc.publicnode.com"]
+    tokens:
+      USDC: {address: "0x078D782b760474a361dDA0AF3839290b0EF57AD6", verified: true}
+      USDT: {address: "0x9151434b16b9763660705744891fA906F660EcC5", verified: true}  # USDT0

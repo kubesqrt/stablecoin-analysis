@@ -1,0 +1,10 @@
+# Cached DefiLlama responses - regenerated on demand, and large.
+data/.cache/
+data/fetch.log
+__pycache__/
+*.pyc
+
+# The snapshot is an intermediate build product; docs/ is what gets published.
+data/snapshot.json
+data/signal.log
+.claude/

@@ -1,0 +1,58 @@
+# Chain handling.
+#
+# DefiLlama uses two incompatible chain-name namespaces: the TVL API says "Binance",
+# "Optimism", "xDai", "zkSync Era"; the stablecoins API says "BSC", "OP Mainnet",
+# "Gnosis", "ZKsync Era". fetch_llama.py pulls /config -> chainKeyToLabelMap at runtime
+# and builds the translation automatically. The aliases below are manual corrections
+# applied on top of that, for pairs the map does not cover.
+
+aliases:
+  Binance: BSC
+  "OP Mainnet": Optimism
+  xDai: Gnosis
+  "zkSync Era": ZKsync Era
+  Avalanche C-Chain: Avalanche
+  "Hyperliquid L1": Hyperliquid
+  HyperEVM: Hyperliquid
+
+# The chain we are selling. Drives the Arbitrum marker.
+target_chain: Arbitrum
+
+# Chains surfaced in the context strip and given first-class columns, in display order.
+# Any other chain a team is on still appears in its expanded per-chain breakdown.
+priority:
+  - Ethereum
+  - Arbitrum
+  - Base
+  - Solana
+  - BSC
+  - Optimism
+  - Polygon
+  - Avalanche
+  - Hyperliquid
+  - Monad
+  - Plasma
+  - Berachain
+  - Sonic
+  - Unichain
+  - Tron
+
+# chainTvls keys carrying these suffixes are DefiLlama pseudo-chains, not real chains.
+# Including them double-counts. Any key containing "-" is dropped; these are documented
+# here so the reason is obvious to a future reader.
+pseudo_suffixes:
+  - borrowed
+  - staking
+  - pool2
+  - doublecounted
+  - liquidstaking
+  - vesting
+  - offers
+  - treasury
+
+# A team holding a fraction of a cent on the target chain is not meaningfully
+# deployed there - several report ~$0.001 of Arbitrum TVL from an abandoned or
+# test deployment. Below this figure the marker reads "listed" (contracts exist,
+# no real usage) rather than "deployed", so those teams stay visible as prospects.
+# Set to 0 to treat any non-zero TVL as deployed.
+min_tvl_for_deployed: 1000
