@@ -5,7 +5,7 @@ Two independent gaps exist, and they need different treatment:
   1. Teams we know about but never fetched a token breakdown for. Measurable
      directly from the snapshot - see the "fetch coverage" section.
 
-  2. Contracts holding USDC/USDT that we cannot tie to any team at all. Those
+  2. Contracts holding tracked stablecoins that we cannot tie to any team. Those
      are invisible to a DefiLlama-driven view by construction, so this walks the
      largest on-chain holders of each token (free Blockscout API, no key) and
      subtracts everything we can attribute. What remains is the honest blind

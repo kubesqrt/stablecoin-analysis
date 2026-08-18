@@ -16,6 +16,8 @@ chains:
     tokens:
       USDC: {address: "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48", verified: true}
       USDT: {address: "0xdAC17F958D2ee523a2206206994597C13D831ec7", verified: true}
+      USDe: {address: "0x4c9EDD5852cd905f086C759E8383e09bff1E68B3", verified: true}
+      sUSDe: {address: "0x9D39A5DE30e57443BfF2A8307A4256c8797A3497", verified: true}
 
   Arbitrum:
     chain_id: 42161
@@ -24,6 +26,7 @@ chains:
       USDC:    {address: "0xaf88d065e77c8cC2239327C5EDb3A432268e5831", verified: true}
       USDC.e:  {address: "0xFF970A61A04b1cA14834A43f5dE4533eBDDB5CC8", verified: true}
       USDT:    {address: "0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9", verified: true}  # USDT0
+      USDe: {address: "0x5d3a1Ff2b6BAb83b63cd9AD0787074081a52ef34", verified: true}
 
   Base:
     chain_id: 8453
@@ -31,6 +34,7 @@ chains:
     tokens:
       USDC: {address: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913", verified: true}
       USDT: {address: "0xfde4C96c8593536E31F229EA8f37b2ADa2699bb2", verified: true}  # bridged
+      USDe: {address: "0x5d3a1Ff2b6BAb83b63cd9AD0787074081a52ef34", verified: true}
 
   Optimism:
     chain_id: 10

@@ -213,7 +213,8 @@ def main() -> int:
     prospects = [r for r in rows if r["arb"] == "none" and 500_000 <= r["t"] <= 10_000_000]
     print(f"docs/index.html  {size_mb:.1f} MB  {len(rows)} teams")
     print(f"  {len(prospects)} teams in the $500k-$10M band with no {payload['target_chain']} signal")
-    print(f"  holding ${sum(r['core'] for r in prospects):,.0f} in USDC+USDT")
+    labels = " + ".join(a["label"] for a in payload["assets"])
+    print(f"  holding ${sum(r['core'] for r in prospects):,.0f} in {labels}")
 
     if args.open:
         webbrowser.open(out.as_uri())

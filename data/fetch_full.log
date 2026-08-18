@@ -1,0 +1,63 @@
+Tier 1: fetching protocol list ...
+  8070 protocols
+Fetching parent registry and chain labels ...
+  811 parent protocols, 256 chain labels
+  5248 live protocols -> 4158 teams
+Fetching chain-level stablecoin market sizes ...
+  146 chains
+Tier 2: token breakdown for 4157 teams (5236 protocols), 12 workers ...
+  100/5236  ok=83 too_large=2 unavailable=15
+  200/5236  ok=160 too_large=4 unavailable=36
+  300/5236  ok=246 too_large=4 unavailable=50
+  400/5236  ok=339 too_large=6 unavailable=55
+  500/5236  ok=433 too_large=6 unavailable=61
+  600/5236  ok=521 too_large=6 unavailable=73
+  700/5236  ok=610 too_large=8 unavailable=82
+  800/5236  ok=701 too_large=8 unavailable=91
+  900/5236  ok=794 too_large=8 unavailable=98
+  1000/5236  error=1 ok=884 too_large=9 unavailable=106
+  1100/5236  error=1 ok=983 too_large=9 unavailable=107
+  1200/5236  error=1 ok=1080 too_large=9 unavailable=110
+  1300/5236  error=1 ok=1178 too_large=9 unavailable=112
+  1400/5236  error=1 ok=1271 too_large=9 unavailable=119
+  1500/5236  error=1 ok=1368 too_large=9 unavailable=122
+  1600/5236  error=1 ok=1463 too_large=9 unavailable=127
+  1700/5236  error=1 ok=1555 too_large=9 unavailable=135
+  1800/5236  error=1 ok=1652 too_large=9 unavailable=138
+  1900/5236  error=2 ok=1749 too_large=9 unavailable=140
+  2000/5236  error=2 ok=1844 too_large=9 unavailable=145
+  2100/5236  error=2 ok=1939 too_large=9 unavailable=150
+  2200/5236  error=2 ok=2035 too_large=11 unavailable=152
+  2300/5236  error=2 ok=2130 too_large=11 unavailable=157
+  2400/5236  error=2 ok=2227 too_large=11 unavailable=160
+  2500/5236  error=9 ok=2319 too_large=11 unavailable=161
+  2600/5236  error=38 ok=2389 too_large=11 unavailable=162
+  2700/5236  error=38 ok=2488 too_large=11 unavailable=163
+  2800/5236  error=38 ok=2587 too_large=11 unavailable=164
+  2900/5236  error=38 ok=2685 too_large=11 unavailable=166
+  3000/5236  error=38 ok=2783 too_large=11 unavailable=168
+  3100/5236  error=38 ok=2880 too_large=11 unavailable=171
+  3200/5236  error=48 ok=2970 too_large=11 unavailable=171
+  3300/5236  error=74 ok=3042 too_large=11 unavailable=173
+  3400/5236  error=74 ok=3138 too_large=11 unavailable=177
+  3500/5236  error=74 ok=3238 too_large=11 unavailable=177
+  3600/5236  error=74 ok=3334 too_large=11 unavailable=181
+  3700/5236  error=74 ok=3433 too_large=11 unavailable=182
+  3800/5236  error=100 ok=3507 too_large=11 unavailable=182
+  3900/5236  error=110 ok=3595 too_large=11 unavailable=184
+  4000/5236  error=110 ok=3689 too_large=11 unavailable=190
+  4100/5236  error=110 ok=3786 too_large=11 unavailable=193
+  4200/5236  error=110 ok=3840 too_large=11 unavailable=239
+  4300/5236  error=146 ok=3870 too_large=11 unavailable=273
+  4400/5236  error=146 ok=3911 too_large=11 unavailable=332
+  4500/5236  error=146 ok=3954 too_large=11 unavailable=389
+  4600/5236  error=146 ok=3979 too_large=11 unavailable=464
+  4700/5236  error=146 ok=4000 too_large=11 unavailable=543
+  4800/5236  error=146 ok=4023 too_large=11 unavailable=620
+  4900/5236  error=182 ok=4032 too_large=11 unavailable=675
+  5000/5236  error=182 ok=4044 too_large=11 unavailable=763
+  5100/5236  error=182 ok=4057 too_large=11 unavailable=850
+  5200/5236  error=182 ok=4068 too_large=11 unavailable=939
+  5236/5236  error=182 ok=4072 too_large=11 unavailable=971
+
+Wrote data/snapshot.json (3.1 MB) in 927s

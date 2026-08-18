@@ -1,4 +1,4 @@
-"""Tier 3: read USDC/USDT balances directly from contracts via Multicall3.
+"""Tier 3: read stablecoin balances directly from contracts via Multicall3.
 
 DefiLlama covers most teams, but not all: new chains its adapters do not track,
 treasury wallets excluded from TVL, and anything you need measured rather than
@@ -30,9 +30,12 @@ BALANCE_OF = bytes.fromhex("70a08231")   # balanceOf(address)
 DECIMALS = bytes.fromhex("313ce567")     # decimals()
 SYMBOL = bytes.fromhex("95d89b41")       # symbol()
 
-# Which config token keys roll up into which headline asset.
+# Which config/rpc.yml token keys roll up into which headline asset.
+# USDe and sUSDe are 18 decimals, not 6 - confirmed by the startup probe, which
+# is why decimals are always read on-chain rather than assumed.
 ASSET_OF = {"USDC": "usdc", "USDC.e": "usdc",
-            "USDT": "usdt", "USDT.e": "usdt", "USDT-legacy": "usdt"}
+            "USDT": "usdt", "USDT.e": "usdt", "USDT-legacy": "usdt",
+            "USDe": "usde", "sUSDe": "usde"}
 
 
 def rpc_call(urls: list, payload: dict, timeout: int = 30):
@@ -122,7 +125,7 @@ def probe_tokens(chain: str, spec: dict, multicall_addr: str) -> dict:
 
 
 def main() -> int:
-    ap = argparse.ArgumentParser(description="Read USDC/USDT balances on-chain")
+    ap = argparse.ArgumentParser(description="Read stablecoin balances on-chain")
     ap.add_argument("--probe", action="store_true",
                     help="only verify token addresses and decimals")
     ap.add_argument("--chunk", type=int, default=400, help="pairs per eth_call")
