@@ -1,5 +1,7 @@
 # Stablecoin team dashboard
 
+**Live: https://kubesqrt.github.io/stablecoin-analysis/**
+
 Which teams hold USDC and USDT, on which chains, and are they already on Arbitrum?
 
 Built for BD prospecting: find teams sitting on meaningful stablecoin balances that
@@ -122,11 +124,26 @@ $trigger = New-ScheduledTaskTrigger -Daily -At 7am
 Register-ScheduledTask -TaskName "Stablecoin dashboard" -Action $action -Trigger $trigger
 ```
 
-## Publishing to GitHub Pages
+## Publishing updates
 
-`docs/` is already self-contained and needs no build step. Push the repo, enable Pages on
-the `docs/` folder, and add a scheduled Action running `fetch_llama.py` then `build.py`
-and committing `docs/`. `data/.cache/` is gitignored — it's regenerated on demand.
+Pages is already serving `docs/` from `main`. To publish a refresh:
+
+```powershell
+.\refresh.ps1 -NoOpen
+git add docs data/history
+git commit -m "Refresh data"
+git push
+```
+
+The site rebuilds within about a minute.
+
+To automate it with a scheduled GitHub Action, add `.github/workflows/refresh.yml`
+running `fetch_llama.py` then `build.py` and committing `docs/`. Note the `gh` token in
+use here only has `gist`, `read:org` and `repo` scopes — pushing a workflow file needs
+the `workflow` scope, so either run `gh auth refresh -s workflow` or add the file through
+the GitHub web UI.
+
+`data/.cache/` is gitignored — it's regenerated on demand.
 
 ## Caveats worth knowing
 
