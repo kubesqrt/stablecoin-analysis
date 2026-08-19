@@ -8,3 +8,4 @@ __pycache__/
 data/snapshot.json
 data/signal.log
 .claude/
+data/*.log
